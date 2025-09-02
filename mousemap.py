@@ -21,11 +21,13 @@ ui = UInput({
 })
 
 finger_down = False
+keyDev = InputDevice(KEYBOARD)
 
 async def touchpad_monitor():
     global finger_down
+    global keyDev
+    # = InputDevice(KEYBOARD)
     dev = InputDevice(TOUCHPAD)
-    keyDev = InputDevice(KEYBOARD)
     grabbed = False
     async for event in dev.async_read_loop():
         if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
@@ -42,8 +44,9 @@ async def touchpad_monitor():
 
 async def keyboard_monitor():
     global finger_down
-    dev = InputDevice(KEYBOARD)
-    async for event in dev.async_read_loop():
+    global keyDev
+    # keyDev = InputDevice(KEYBOARD)
+    async for event in keyDev.async_read_loop():
         # Always check and update grab state BEFORE processing the event
         # print("event")
 
