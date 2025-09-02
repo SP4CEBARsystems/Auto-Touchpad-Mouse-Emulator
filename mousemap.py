@@ -36,22 +36,21 @@ async def keyboard_monitor():
     dev.grab()  # Grab the device to block events from reaching the system
     async for event in dev.async_read_loop():
         if event.type == ecodes.EV_KEY and event.value in (1, 0):  # press/release
-            if finger_down:
+            if finger_down and event.code in (ecodes.KEY_J, ecodes.KEY_K, ecodes.KEY_L):
+                # Block J/K/L and map to mouse buttons
                 if event.code == ecodes.KEY_J:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_LEFT, event.value)
                     print("left")
-                    continue  # Block 'j' key
                 elif event.code == ecodes.KEY_K:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_MIDDLE, event.value)
                     print("middle")
-                    continue  # Block 'k' key
                 elif event.code == ecodes.KEY_L:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_RIGHT, event.value)
                     print("right")
-                    continue  # Block 'l' key
-                else:
-                    ui.write_event(event)
+                # Do not forward J/K/L key events
+                continue
             else:
+                # Forward all other keys
                 ui.write_event(event)
         ui.syn()
 
