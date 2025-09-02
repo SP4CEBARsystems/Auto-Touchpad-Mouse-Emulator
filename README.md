@@ -8,7 +8,7 @@ This allows your right hand to press mouse buttons while controlling the touchpa
 When you need a mouse but do not have one near you right now.
 
 ## Platform
-- This project was tested to work on Linux Mint cinnamon and will likely work on other distributions of Linux, please let me know if it does or does not.
+- This project was tested to work on Linux Mint cinnamon and will likely work on other distributions of Linux. If it doesn't, please [open an issue](https://github.com/SP4CEBARsystems/Auto-Touchpad-Mouse-Emulator/issues). If it does, please let me know some other way.
 - For Windows refer to [Touchpad-Mouse-Emulator](https://github.com/SP4CEBARsystems/Touchpad-Mouse-Emulator).
 
 ## Installation
