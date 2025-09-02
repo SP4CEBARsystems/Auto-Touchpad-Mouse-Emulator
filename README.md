@@ -1,8 +1,8 @@
 # Mouse-Like Agillity From A Touchpad!
 
 ## How To Use
-Whenever the touchpad is touched a macro will activate that maps the keyboard keys `j`, `k`, and `l` to the mouse buttons `left`, `middle`, and `right` respectively. 
-This allows your right hand to press mouse buttons while your thumb moves the mouse allowing applications that require a mouse to use like Solidworks or games like Minecraft or Fortnite to be played from the touchpad.
+Whenever the touchpad is touched, a macro will map the keyboard keys `j`, `k`, and `l` to the mouse buttons `left`, `middle`, and `right` respectively. 
+This allows your right hand to press mouse buttons while your thumb moves the mouse allowing applications that require the use of a mouse like Solidworks or blender; or games like Minecraft or Fortnite to be operated from the touchpad.
 
 ## When To Use
 When you need a mouse but do not have one near you right now.
