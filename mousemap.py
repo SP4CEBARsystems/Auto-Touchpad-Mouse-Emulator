@@ -49,8 +49,10 @@ async def keyboard_monitor():
                     ui.write(ecodes.EV_KEY, ecodes.BTN_RIGHT, event.value)
                     print("right")
                     continue  # Block 'l' key
-            # Forward all other key events to the system
-            ui.write_event(event)
+                else:
+                    ui.write_event(event)
+            else:
+                ui.write_event(event)
         ui.syn()
 
 async def main():
