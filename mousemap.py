@@ -26,21 +26,30 @@ keyDev = InputDevice(KEYBOARD)
 async def touchpad_monitor():
     global finger_down
     global keyDev
-    # = InputDevice(KEYBOARD)
-    dev = InputDevice(TOUCHPAD)
     grabbed = False
-    async for event in dev.async_read_loop():
-        if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-            finger_down = event.value == 1
-            print("held!", finger_down)
-            if finger_down and not grabbed:
-                keyDev.grab()
-                grabbed = True
-                print("grab")
-            elif not finger_down and grabbed:
+    while True:
+        try:
+            dev = InputDevice(TOUCHPAD)
+            print("Touchpad enabled, monitoring...")
+            async for event in dev.async_read_loop():
+                if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
+                    finger_down = event.value == 1
+                    print("held!", finger_down)
+                    if finger_down and not grabbed:
+                        keyDev.grab()
+                        grabbed = True
+                        print("grab")
+                    elif not finger_down and grabbed:
+                        keyDev.ungrab()
+                        grabbed = False
+                        print("ungrab")
+        except (OSError, IOError):
+            print("Touchpad disabled, waiting...")
+            finger_down = False
+            if grabbed:
                 keyDev.ungrab()
                 grabbed = False
-                print("ungrab")
+            await asyncio.sleep(1)  # Wait before retrying
 
 async def keyboard_monitor():
     global finger_down
