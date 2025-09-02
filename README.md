@@ -1,0 +1,23 @@
+# Mouse-Like Agillity From A Touchpad!
+
+## How To Use
+Whenever the touchpad is touched a macro will activate that maps the keyboard keys `j`, `k`, and `l` to the mouse buttons `left`, `middle`, and `right` respectively. 
+This allows your right hand to press mouse buttons while your thumb moves the mouse allowing applications that require a mouse to use like Solidworks or games like Minecraft or Fortnite to be played from the touchpad.
+
+## When To Use
+When you need a mouse but do not have one near you right now.
+
+## Platform
+This project was tested to work on Linux Mint cinnamon and will likely work on other distributions of linux. Please let me know if it does or does not.
+
+## Installation
+1. Download the script.
+2. Unzip the script
+3. Navigate to the script with this command or similar
+  ```sh
+  cd ~Downloads/Auto-Touchpad-Mouse-Emulator
+  ```
+4. Run it with the command below (uses administrator privileges).
+  ```sh
+  sudo python3 mousemap.py
+  ```
