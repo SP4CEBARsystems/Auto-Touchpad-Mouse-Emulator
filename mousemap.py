@@ -51,7 +51,7 @@ async def keyboard_monitor():
         # print("event")
 
         if event.type == ecodes.EV_KEY and event.value in (1, 0):  # press/release
-            if finger_down and event.code in (ecodes.KEY_J, ecodes.KEY_K, ecodes.KEY_L):
+            if finger_down and event.code in (ecodes.KEY_J, ecodes.KEY_K, ecodes.KEY_L, ecodes.KEY_I, ecodes.KEY_O):
                 # Block J/K/L and map to mouse buttons
                 if event.code == ecodes.KEY_J:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_LEFT, event.value)
@@ -62,7 +62,13 @@ async def keyboard_monitor():
                 elif event.code == ecodes.KEY_L:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_RIGHT, event.value)
                     print("right", event.value)
-                continue  # Do not forward J/K/L key events
+                elif event.code == ecodes.KEY_I and event.value == 1:  # scroll down on key press
+                    ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, -1)
+                    print("scroll down")
+                elif event.code == ecodes.KEY_O and event.value == 1:  # scroll up on key press
+                    ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, 1)
+                    print("scroll up")
+                continue  # Do not forward J/K/L/I/O key events
             else:
                 # Forward all other keys
                 ui.write_event(event)
