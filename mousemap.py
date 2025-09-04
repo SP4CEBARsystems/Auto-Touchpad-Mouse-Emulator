@@ -10,7 +10,7 @@ def find_device_path_evdev(name_hint):
     return None
 
 TOUCHPAD = find_device_path_evdev('touchpad') or "/dev/input/event6"
-KEYBOARD = find_device_path_evdev('keyboard') or "/dev/input/event7"
+KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 
 # Virtual device to emit events
 ui = UInput({
