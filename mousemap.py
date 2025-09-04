@@ -32,11 +32,41 @@ finger_down = False
 keyDev = InputDevice(KEYBOARD)
 keyDev.grab()
 
+# Track pressed state for mapped keys
+pressed_keys = {
+    ecodes.KEY_J: False,
+    ecodes.KEY_K: False,
+    ecodes.KEY_L: False,
+    ecodes.KEY_I: False,
+    ecodes.KEY_O: False,
+}
+pressed_mouse = {
+    ecodes.BTN_LEFT: False,
+    ecodes.BTN_MIDDLE: False,
+    ecodes.BTN_RIGHT: False,
+}
+
 async def touchpad_monitor():
     global finger_down
     dev = InputDevice(TOUCHPAD)
+    prev_finger_down = False
     async for event in dev.async_read_loop():
         if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
+            prev_finger_down, old_finger_down = finger_down, finger_down
+            # If finger_down changed from True to False, release all mapped keys/buttons
+            if old_finger_down and event.value != 1:
+                # Release mapped keys
+                for key, pressed in pressed_keys.items():
+                    if pressed:
+                        pressed_keys[key] = False
+                        uiKey.write(ecodes.EV_KEY, key, 0)  # Release
+                        # advice rejected > Do not send keyup for J/K/L/I/O, just update state
+                # Release mouse buttons
+                for btn, pressed in pressed_mouse.items():
+                    if pressed:
+                        ui.write(ecodes.EV_KEY, btn, 0)  # Release
+                        pressed_mouse[btn] = False
+                ui.syn()
             finger_down = event.value == 1
 
 async def keyboard_monitor():
@@ -48,16 +78,21 @@ async def keyboard_monitor():
                 # Block J/K/L and map to mouse buttons
                 if event.code == ecodes.KEY_J:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_LEFT, event.value)
+                    pressed_mouse[ecodes.BTN_LEFT] = event.value == 1
                 elif event.code == ecodes.KEY_K:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_MIDDLE, event.value)
+                    pressed_mouse[ecodes.BTN_MIDDLE] = event.value == 1
                 elif event.code == ecodes.KEY_L:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_RIGHT, event.value)
+                    pressed_mouse[ecodes.BTN_RIGHT] = event.value == 1
                 elif event.code == ecodes.KEY_I and event.value == 1:  # scroll down on key press
                     ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, -1)
                 elif event.code == ecodes.KEY_O and event.value == 1:  # scroll up on key press
                     ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, 1)
                 ui.syn()
                 continue  # Do not forward J/K/L/I/O key events
+            elif not finger_down and event.code in pressed_keys:
+                pressed_keys[event.code] = event.value == 1
         # Forward all other keys
         uiKey.write_event(event)
         uiKey.syn()
