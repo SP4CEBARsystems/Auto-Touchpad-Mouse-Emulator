@@ -13,16 +13,22 @@ def find_device_path_evdev(name_hint):
 TOUCHPAD = find_device_path_evdev('touchpad') or "/dev/input/event6"
 KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 
+# def valid_key_codes():
+#     # Only include integer key codes, not aliases or non-key constants
+#     return [code for name, code in ecodes.__dict__.items()
+#             if name.startswith("KEY_") and isinstance(code, int)]
+
 # Virtual device to emit events
-# ui = UInput()
+uiKey = UInput()
 ui = UInput({
-    ecodes.EV_KEY: ([
-        ecodes.BTN_LEFT,
-        ecodes.BTN_MIDDLE,
-        ecodes.BTN_RIGHT
-    ] + [
-        getattr(ecodes, k) for k in dir(ecodes) if k.startswith("KEY_")
-    ]),
+    ecodes.EV_KEY: (
+        [
+            ecodes.BTN_LEFT,
+            ecodes.BTN_MIDDLE,
+            ecodes.BTN_RIGHT
+        ]
+        # + valid_key_codes()
+    ),
     ecodes.EV_REL: [
         ecodes.REL_X,
         ecodes.REL_Y,
@@ -31,7 +37,15 @@ ui = UInput({
 })
 
 finger_down = False
+# finger_down = True
+# grabbed = True
 keyDev = InputDevice(KEYBOARD)
+# keyDev.grab()
+
+# keyDev.grab()
+# for event in keyDev.read_loop():
+#     uiKey.write_event(event)
+#     uiKey.syn()
 
 async def touchpad_monitor():
     global finger_down
@@ -55,12 +69,26 @@ async def touchpad_monitor():
 async def keyboard_monitor():
     global finger_down
     global keyDev
+
+    # keyDev.grab()
+    # for event in keyDev.read_loop():
+    #     uiKey.write_event(event)
+    #     uiKey.syn()
+    # print("escaped")
+
     # keyDev = InputDevice(KEYBOARD)
     async for event in keyDev.async_read_loop():
+        # uiKey.write_event(event)
+        # uiKey.syn()
+        # continue
+        # print("escaped")
         # Always check and update grab state BEFORE processing the event
         # print("event")
 
         if event.type == ecodes.EV_KEY and event.value in (1, 0):  # press/release
+            # uiKey.write_event(event)
+            # uiKey.syn()
+            # continue
             if finger_down and event.code in (ecodes.KEY_J, ecodes.KEY_K, ecodes.KEY_L, ecodes.KEY_I, ecodes.KEY_O):
                 # Block J/K/L and map to mouse buttons
                 if event.code == ecodes.KEY_J:
@@ -79,11 +107,13 @@ async def keyboard_monitor():
                     ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, 1)
                     # print("scroll up")
                 continue  # Do not forward J/K/L/I/O key events
-            else:
+            elif finger_down:
                 # Forward all other keys
-                ui.write_event(event)
+                uiKey.write_event(event)
+                # uiKey.syn()
         # else:
         #     ui.write_event(event)
+        uiKey.syn()
         ui.syn()
 
 async def main():
