@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 import asyncio
 from evdev import InputDevice, categorize, ecodes, UInput, AbsInfo
+# from evdev import keys
 
 # Adjust these for your system
 TOUCHPAD = "/dev/input/event6"   # run `libinput list-devices` to find this
 KEYBOARD = "/dev/input/event7"
 
 # Virtual device to emit events
+# ui = UInput()
 ui = UInput({
     ecodes.EV_KEY: [
         ecodes.BTN_LEFT,
@@ -19,6 +21,18 @@ ui = UInput({
         ecodes.REL_WHEEL
     ]
 })
+# ui = UInput({
+#     ecodes.EV_KEY: (
+#         [ecodes.BTN_LEFT, ecodes.BTN_MIDDLE, ecodes.BTN_RIGHT]
+#         #   +
+#         # [getattr(ecodes, k) for k in dir(ecodes) if k.startswith("KEY_")]
+#     ),
+#     ecodes.EV_REL: [
+#         ecodes.REL_X,
+#         ecodes.REL_Y,
+#         ecodes.REL_WHEEL
+#     ]
+# })
 
 finger_down = False
 keyDev = InputDevice(KEYBOARD)
@@ -72,6 +86,8 @@ async def keyboard_monitor():
             else:
                 # Forward all other keys
                 ui.write_event(event)
+        # else:
+        #     ui.write_event(event)
         ui.syn()
 
 async def main():
