@@ -49,24 +49,27 @@ pressed_mouse = {
 async def touchpad_monitor():
     global finger_down
     dev = InputDevice(TOUCHPAD)
-    prev_finger_down = False
     async for event in dev.async_read_loop():
         if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-            prev_finger_down, old_finger_down = finger_down, finger_down
             # If finger_down changed from True to False, release all mapped keys/buttons
-            if old_finger_down and event.value != 1:
+            onPress = not finger_down and event.value == 1
+            onRelease = finger_down and event.value != 1
+            if onPress:
                 # Release mapped keys
                 for key, pressed in pressed_keys.items():
                     if pressed:
-                        pressed_keys[key] = False
                         uiKey.write(ecodes.EV_KEY, key, 0)  # Release
-                        # advice rejected > Do not send keyup for J/K/L/I/O, just update state
+                        uiKey.syn()
+                        pressed_keys[key] = False
+                        print("release", key)
+                        # Only send keyup for J/K/L/I/O if finger_down was True (remapped)
+            elif onRelease:
                 # Release mouse buttons
                 for btn, pressed in pressed_mouse.items():
                     if pressed:
                         ui.write(ecodes.EV_KEY, btn, 0)  # Release
+                        ui.syn()
                         pressed_mouse[btn] = False
-                ui.syn()
             finger_down = event.value == 1
 
 async def keyboard_monitor():
@@ -75,6 +78,7 @@ async def keyboard_monitor():
     async for event in keyDev.async_read_loop():
         if event.type == ecodes.EV_KEY and event.value in (1, 0):  # press/release
             if finger_down and event.code in (ecodes.KEY_J, ecodes.KEY_K, ecodes.KEY_L, ecodes.KEY_I, ecodes.KEY_O):
+                print("press", event.value, event.code)
                 # Block J/K/L and map to mouse buttons
                 if event.code == ecodes.KEY_J:
                     ui.write(ecodes.EV_KEY, ecodes.BTN_LEFT, event.value)
