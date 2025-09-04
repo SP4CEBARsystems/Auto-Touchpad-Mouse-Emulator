@@ -30,21 +30,14 @@ ui = UInput({
 
 finger_down = False
 keyDev = InputDevice(KEYBOARD)
+keyDev.grab()
 
 async def touchpad_monitor():
     global finger_down
-    global keyDev
     dev = InputDevice(TOUCHPAD)
-    grabbed = False
     async for event in dev.async_read_loop():
         if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
             finger_down = event.value == 1
-            if finger_down and not grabbed:
-                keyDev.grab()
-                grabbed = True
-            elif not finger_down and grabbed:
-                keyDev.ungrab()
-                grabbed = False
 
 async def keyboard_monitor():
     global finger_down
@@ -65,10 +58,9 @@ async def keyboard_monitor():
                     ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, 1)
                 ui.syn()
                 continue  # Do not forward J/K/L/I/O key events
-            elif finger_down:
-                # Forward all other keys
-                uiKey.write_event(event)
-                uiKey.syn()
+        # Forward all other keys
+        uiKey.write_event(event)
+        uiKey.syn()
 
 async def main():
     await asyncio.gather(
