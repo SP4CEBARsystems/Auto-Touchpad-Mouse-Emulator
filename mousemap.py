@@ -16,29 +16,19 @@ KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 # Virtual device to emit events
 # ui = UInput()
 ui = UInput({
-    ecodes.EV_KEY: [
+    ecodes.EV_KEY: ([
         ecodes.BTN_LEFT,
         ecodes.BTN_MIDDLE,
         ecodes.BTN_RIGHT
-    ],
+    ] + [
+        getattr(ecodes, k) for k in dir(ecodes) if k.startswith("KEY_")
+    ]),
     ecodes.EV_REL: [
         ecodes.REL_X,
         ecodes.REL_Y,
         ecodes.REL_WHEEL
     ]
 })
-# ui = UInput({
-#     ecodes.EV_KEY: (
-#         [ecodes.BTN_LEFT, ecodes.BTN_MIDDLE, ecodes.BTN_RIGHT]
-#         #   +
-#         # [getattr(ecodes, k) for k in dir(ecodes) if k.startswith("KEY_")]
-#     ),
-#     ecodes.EV_REL: [
-#         ecodes.REL_X,
-#         ecodes.REL_Y,
-#         ecodes.REL_WHEEL
-#     ]
-# })
 
 finger_down = False
 keyDev = InputDevice(KEYBOARD)
