@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 import asyncio
-from evdev import InputDevice, categorize, ecodes, UInput, AbsInfo
+from evdev import InputDevice, categorize, ecodes, UInput, AbsInfo, list_devices
 
-# Adjust these for your system
-TOUCHPAD = "/dev/input/event6"   # run `libinput list-devices` to find this
-KEYBOARD = "/dev/input/event7"
+def find_device_path_evdev(name_hint):
+    for path in list_devices():
+        dev = InputDevice(path)
+        if name_hint.lower() in dev.name.lower():
+            return path
+    return None
+
+TOUCHPAD = find_device_path_evdev('touchpad') or "/dev/input/event6"
+KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 
 # Virtual device to emit events
 ui = UInput({
