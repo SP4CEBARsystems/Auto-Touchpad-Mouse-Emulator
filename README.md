@@ -18,7 +18,9 @@ When you need a mouse but do not have one near you right now.
   ```sh
   cd ~Downloads/Auto-Touchpad-Mouse-Emulator
   ```
-4. modify the strings in the three calls to `find_device_path_evdev()` to match your pointer devices, note that the mouse detection is used to exits the program when it is not needed. 
+4. modify the strings in the three calls to `find_device_path_evdev()` to match the name of your pointer devices, note that the mouse detection is used to exits the program when it is not needed.
+    - To see what this name of your devices is, you can run `libinput list-devices` in the terminal to list all devices.
+    - If you are unsure which is which, you can: run `sudo libinput debug-events`, use the device in question, and see what number is on the shown path, this path you can also find in `libinput list-devices` where you can find its name.
 5. Run it with the command below to test it (uses administrator privileges).
   ```sh
   sudo python3 mousemap.py
