@@ -18,7 +18,16 @@ When you need a mouse but do not have one near you right now.
   ```sh
   cd ~Downloads/Auto-Touchpad-Mouse-Emulator
   ```
-4. Run it with the command below (uses administrator privileges).
+4. modify the strings in the three calls to `find_device_path_evdev()` to match your pointer devices, note that the mouse detection is used to exits the program when it is not needed. 
+5. Run it with the command below to test it (uses administrator privileges).
   ```sh
   sudo python3 mousemap.py
   ```
+6. Navigate to the file in the terminal using `cd` and use the command below to make the file runnable
+```sh
+chmod +x mousemap.py
+```
+7. Finally run the path to your file as a command like below every time you want to run it:
+```sh
+/home/your-user-name/Scripts/mousemap.py
+```
