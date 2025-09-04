@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
 import asyncio
-from evdev import InputDevice, categorize, ecodes, UInput, AbsInfo
-import subprocess
-import re
+from evdev import InputDevice, categorize, ecodes, UInput, AbsInfo, list_devices
 
-def find_device_path(device_type):
-    output = subprocess.check_output(['libinput', 'list-devices'], text=True)
-    # Find the section for the device type
-    pattern = re.compile(r'^\s*Device:\s*(.*)\n(?:.*\n)*?Kernel:\s*(/dev/input/event\d+)', re.MULTILINE)
-    for match in pattern.finditer(output):
-        name, path = match.groups()
-        if device_type.lower() in name.lower():
+def find_device_path_evdev(name_hint):
+    for path in list_devices():
+        dev = InputDevice(path)
+        if name_hint.lower() in dev.name.lower():
             return path
     return None
 
-# Adjust these for your system
-TOUCHPAD = find_device_path('touchpad') or "/dev/input/event6"
-KEYBOARD = find_device_path('keyboard') or "/dev/input/event7"
+TOUCHPAD = find_device_path_evdev('touchpad') or "/dev/input/event6"
+KEYBOARD = find_device_path_evdev('keyboard') or "/dev/input/event7"
 
 # Virtual device to emit events
 ui = UInput({
