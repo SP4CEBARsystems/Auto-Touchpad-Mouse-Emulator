@@ -49,6 +49,13 @@ pressed_mouse = {
     ecodes.BTN_MIDDLE: False,
     ecodes.BTN_RIGHT: False,
 }
+key_action_map = {
+    ecodes.KEY_J: {"type": "mouse", "button": ecodes.BTN_LEFT},
+    ecodes.KEY_K: {"type": "mouse", "button": ecodes.BTN_MIDDLE},
+    ecodes.KEY_L: {"type": "mouse", "button": ecodes.BTN_RIGHT},
+    ecodes.KEY_I: {"type": "scroll", "value": -1},  # scroll down
+    ecodes.KEY_O: {"type": "scroll", "value": 1},   # scroll up
+}
 
 async def touchpad_monitor():
     global finger_down
@@ -75,15 +82,6 @@ async def touchpad_monitor():
                         ui.syn()
                         pressed_mouse[btn] = False
             finger_down = event.value == 1
-
-# Map keyboard keys to mouse buttons or scroll actions
-key_action_map = {
-    ecodes.KEY_J: {"type": "mouse", "button": ecodes.BTN_LEFT},
-    ecodes.KEY_K: {"type": "mouse", "button": ecodes.BTN_MIDDLE},
-    ecodes.KEY_L: {"type": "mouse", "button": ecodes.BTN_RIGHT},
-    ecodes.KEY_I: {"type": "scroll", "value": -1},  # scroll down
-    ecodes.KEY_O: {"type": "scroll", "value": 1},   # scroll up
-}
 
 async def keyboard_monitor():
     global finger_down
