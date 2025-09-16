@@ -4,6 +4,9 @@
 Whenever the touchpad is touched, this macro will map the keyboard keys `j`, `k`, and `l` to the mouse buttons `left`, `middle`, and `right` respectively. 
 This allows your right hand to press mouse buttons while controlling the touchpad with its thumb, allowing applications that require the use of a mouse to be operated from the touchpad. Examples of such applications include Solidworks, blender, and games like Minecraft or Fortnite.
 
+## When To Use
+When you need a mouse but do not have one near you right now.
+
 ## Key Map
 The key map below only applies while the touchpad is touched, all keys will behave normally otherwise.
 | Key | Mapped |
@@ -13,9 +16,6 @@ The key map below only applies while the touchpad is touched, all keys will beha
 | L | Right Mouse Button |
 | I | Scroll Up |
 | O | Scroll Down |
-
-## When To Use
-When you need a mouse but do not have one near you right now.
 
 ## Platform
 - This project was tested to work on Linux Mint cinnamon and will likely work on other distributions of Linux. If it doesn't, please [open an issue](https://github.com/SP4CEBARsystems/Auto-Touchpad-Mouse-Emulator/issues). If it does, please let me know in the [discussions](https://github.com/SP4CEBARsystems/Auto-Touchpad-Mouse-Emulator/discussions).
