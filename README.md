@@ -14,8 +14,8 @@ The key map below only applies while the touchpad is touched, all keys will beha
 | `j` | Left Mouse Button |
 | `k` | Middle Mouse Button |
 | `l` | Right Mouse Button |
-| `i` | Scroll Up |
-| `o` | Scroll Down |
+| `i` | Scroll Down |
+| `o` | Scroll Up |
 
 ## Platform
 - This project was tested to work on Linux Mint cinnamon and will likely work on other distributions of Linux. If it doesn't, please [open an issue](https://github.com/SP4CEBARsystems/Auto-Touchpad-Mouse-Emulator/issues). If it does, please let me know in the [discussions](https://github.com/SP4CEBARsystems/Auto-Touchpad-Mouse-Emulator/discussions).
