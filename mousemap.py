@@ -85,14 +85,11 @@ async def keyboard_monitor():
                 print("press", event.value, event.code)
                 # Block J/K/L and map to mouse buttons
                 if event.code == ecodes.KEY_J:
-                    ui.write(ecodes.EV_KEY, ecodes.BTN_LEFT, event.value)
-                    pressed_mouse[ecodes.BTN_LEFT] = event.value == 1
+                    release_press_key(event, ecodes.BTN_LEFT)
                 elif event.code == ecodes.KEY_K:
-                    ui.write(ecodes.EV_KEY, ecodes.BTN_MIDDLE, event.value)
-                    pressed_mouse[ecodes.BTN_MIDDLE] = event.value == 1
+                    release_press_key(event, ecodes.BTN_MIDDLE)
                 elif event.code == ecodes.KEY_L:
-                    ui.write(ecodes.EV_KEY, ecodes.BTN_RIGHT, event.value)
-                    pressed_mouse[ecodes.BTN_RIGHT] = event.value == 1
+                    release_press_key(event, ecodes.BTN_RIGHT)
                 elif event.code == ecodes.KEY_I and event.value == 1:  # scroll down on key press
                     ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, -1)
                 elif event.code == ecodes.KEY_O and event.value == 1:  # scroll up on key press
@@ -104,6 +101,13 @@ async def keyboard_monitor():
         # Forward all other keys
         uiKey.write_event(event)
         uiKey.syn()
+
+def release_press_key(event, button):
+    ui.write(ecodes.EV_KEY, button, event.value)
+    pressed_mouse[button] = event.value == 1
+
+def press_key(event, button):
+    ui.write(ecodes.EV_KEY, button, event.value)
 
 async def main():
     await asyncio.gather(
