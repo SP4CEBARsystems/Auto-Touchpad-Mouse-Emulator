@@ -51,3 +51,43 @@ chmod +x mousemap.py
 ```sh
 /home/your-user-name/Scripts/mousemap.py
 ```
+
+## Installation script (Untested)
+You can review, paste, and run the script below at your own risk, it might save you some time.
+```sh
+# Safe Auto-Touchpad Mouse Emulator Installer
+# Copy-paste into terminal
+
+set -e  # Stop immediately if any command fails
+
+RELEASE_URL="https://github.com/SP4CEBARsystems/Auto-Touchpad-Mouse-Emulator/archive/refs/tags/v1.0.0.tar.gz"
+INSTALL_DIR="/opt/auto-touchpad-mouse"
+SYMLINK="/usr/local/bin/auto-touchpad-mouse"
+TMP_ARCHIVE="/tmp/auto-touchpad-v1.0.0.tar.gz"
+
+# 1. Download the release
+echo "Downloading Auto-Touchpad Mouse Emulator..."
+wget -O "$TMP_ARCHIVE" "$RELEASE_URL"
+
+# 2. Create the installation directory (fails if it already exists)
+echo "Creating installation directory at $INSTALL_DIR..."
+sudo mkdir "$INSTALL_DIR"
+
+# 3. Extract into /opt
+echo "Extracting files..."
+sudo tar -xzf "$TMP_ARCHIVE" -C "$INSTALL_DIR" --strip-components=1
+
+# 4. Make the script executable
+sudo chmod +x "$INSTALL_DIR/mousemap.py"
+
+# 5. Create symlink (fails if it already exists)
+sudo ln "$INSTALL_DIR/mousemap.py" "$SYMLINK"
+
+# 6. Clean up
+rm "$TMP_ARCHIVE"
+
+echo ""
+echo "=== Installation Complete ==="
+echo "Run the emulator from anywhere with: auto-touchpad-mouse"
+echo "Edit device paths if needed: sudo nano $INSTALL_DIR/mousemap.py"
+```
