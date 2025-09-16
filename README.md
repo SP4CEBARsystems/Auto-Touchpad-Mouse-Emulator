@@ -4,6 +4,15 @@
 Whenever the touchpad is touched, this macro will map the keyboard keys `j`, `k`, and `l` to the mouse buttons `left`, `middle`, and `right` respectively. 
 This allows your right hand to press mouse buttons while controlling the touchpad with its thumb, allowing applications that require the use of a mouse to be operated from the touchpad. Examples of such applications include Solidworks, blender, and games like Minecraft or Fortnite.
 
+## Key Map
+| Key | Mapped |
+|---|---|
+| J | Left Mouse Button |
+| K | Middle Mouse Button |
+| L | Right Mouse Button |
+| I | Scroll Up |
+| O | Scroll Down |
+
 ## When To Use
 When you need a mouse but do not have one near you right now.
 
