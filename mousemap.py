@@ -76,24 +76,27 @@ async def touchpad_monitor():
                         pressed_mouse[btn] = False
             finger_down = event.value == 1
 
+# Map keyboard keys to mouse buttons or scroll actions
+key_action_map = {
+    ecodes.KEY_J: {"type": "mouse", "button": ecodes.BTN_LEFT},
+    ecodes.KEY_K: {"type": "mouse", "button": ecodes.BTN_MIDDLE},
+    ecodes.KEY_L: {"type": "mouse", "button": ecodes.BTN_RIGHT},
+    ecodes.KEY_I: {"type": "scroll", "value": -1},  # scroll down
+    ecodes.KEY_O: {"type": "scroll", "value": 1},   # scroll up
+}
+
 async def keyboard_monitor():
     global finger_down
     global keyDev
     async for event in keyDev.async_read_loop():
         if event.type == ecodes.EV_KEY and event.value in (1, 0):  # press/release
-            if finger_down and event.code in (ecodes.KEY_J, ecodes.KEY_K, ecodes.KEY_L, ecodes.KEY_I, ecodes.KEY_O):
+            if finger_down and event.code in key_action_map:
                 print("press", event.value, event.code)
-                # Block J/K/L and map to mouse buttons
-                if event.code == ecodes.KEY_J:
-                    release_press_key(event, ecodes.BTN_LEFT)
-                elif event.code == ecodes.KEY_K:
-                    release_press_key(event, ecodes.BTN_MIDDLE)
-                elif event.code == ecodes.KEY_L:
-                    release_press_key(event, ecodes.BTN_RIGHT)
-                elif event.code == ecodes.KEY_I and event.value == 1:  # scroll down on key press
-                    ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, -1)
-                elif event.code == ecodes.KEY_O and event.value == 1:  # scroll up on key press
-                    ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, 1)
+                action = key_action_map[event.code]
+                if action["type"] == "mouse":
+                    release_press_key(event, action["button"])
+                elif action["type"] == "scroll" and event.value == 1:
+                    ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
                 ui.syn()
                 continue  # Do not forward J/K/L/I/O key events
             elif not finger_down and event.code in pressed_keys:
