@@ -21,6 +21,9 @@ The key map below only applies while the touchpad is touched, all keys will beha
 - This project was tested to work on Linux Mint cinnamon and will likely work on other distributions of Linux. If it doesn't, please [open an issue](https://github.com/SP4CEBARsystems/Auto-Touchpad-Mouse-Emulator/issues). If it does, please let me know in the [discussions](https://github.com/SP4CEBARsystems/Auto-Touchpad-Mouse-Emulator/discussions).
 - For Windows refer to [Touchpad-Mouse-Emulator](https://github.com/SP4CEBARsystems/Touchpad-Mouse-Emulator).
 
+## Prerequisites
+- Ensure you have Python 3 installed.
+
 ## Installation
 1. Download the script.
 2. Unzip the script
