@@ -23,6 +23,11 @@ The key map below only applies while the touchpad is touched, all keys will beha
 
 ## Prerequisites
 - Ensure you have Python 3 installed.
+- Ensure these python libraries are supported
+  - asyncio
+  - evdev
+- Make sure your os can access input devices through paths like `/dev/input/event6` (Linux Mint does this, most other distributions may too)
+- It is beneficial to have the `libinput` cli is installed
 
 ## Installation
 1. Download the script.
