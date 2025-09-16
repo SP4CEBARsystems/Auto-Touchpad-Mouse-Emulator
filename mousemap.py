@@ -106,7 +106,7 @@ async def keyboard_monitor():
                 key_action_map[event.code]["is_map_active"] = finger_down
             action = key_action_map[event.code]
             if action["is_map_active"]:
-                print("map", event.value, event.code, "to", action["button"])
+                print("map", event.value, event.code, "to", action["type"], action.get("button", action.get("value", None)))
                 if action["type"] == "mouse":
                     ui.write(ecodes.EV_KEY, action["button"], event.value)
                     # pressed_mouse[action["button"]] = isKeyDown
