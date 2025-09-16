@@ -14,6 +14,7 @@ KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 MOUSE = find_device_path_evdev('SteelSeries SteelSeries Rival 3')
 if MOUSE is not None:
     print("Mouse detected: This macro is now obsolete, exiting.")
+    # print("debug override")
     exit(0)
 
 # Virtual device to emit events
@@ -31,7 +32,6 @@ ui = UInput({
     ]
 })
 
-finger_down = False
 keyDev = InputDevice(KEYBOARD)
 keyDev.grab()
 
@@ -42,13 +42,22 @@ key_action_map = {
     ecodes.KEY_I: {"is_map_active": False, "type": "scroll", "value": -1},  # scroll down
     ecodes.KEY_O: {"is_map_active": False, "type": "scroll", "value": 1},   # scroll up
 }
+finger_down = False
+touch_width = 0  # Add this line
+
+try:
+    MT_WIDTH = ecodes.ABS_MT_WIDTH
+except AttributeError:
+    MT_WIDTH = getattr(ecodes, 'ABS_MT_PRESSURE', None)  # fallback
 
 async def touchpad_monitor():
-    global finger_down
+    global finger_down, touch_width
     dev = InputDevice(TOUCHPAD)
     async for event in dev.async_read_loop():
+        if MT_WIDTH and event.type == ecodes.EV_ABS and event.code == MT_WIDTH:
+            touch_width = event.value
         if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-            finger_down = event.value == 1
+            finger_down = event.value == 1 and touch_width < 8
 
 async def keyboard_monitor():
     global finger_down
