@@ -4,19 +4,24 @@ import signal
 import sys
 from evdev import InputDevice, ecodes, UInput, list_devices
 
-def find_device_path_evdev(name_hint):
-    for path in list_devices():
-        dev = InputDevice(path)
-        if name_hint.lower() in dev.name.lower():
-            return path
-    return None
+class DeviceFinder:
+    def __init__(self):
+        self.touchpad = self.find_device_path_evdev('touchpad') or "/dev/input/event6"
+        self.keyboard = self.find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
+        self.mouse = self.find_device_path_evdev('SteelSeries SteelSeries Rival 3')
+        if self.mouse is not None:
+            print("Mouse detected: This macro is now obsolete, exiting.")
+            sys.exit(0)
 
-TOUCHPAD = find_device_path_evdev('touchpad') or "/dev/input/event6"
-KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
-MOUSE = find_device_path_evdev('SteelSeries SteelSeries Rival 3')
-if MOUSE is not None:
-    print("Mouse detected: This macro is now obsolete, exiting.")
-    sys.exit(0)
+    @staticmethod
+    def find_device_path_evdev(name_hint):
+        for path in list_devices():
+            dev = InputDevice(path)
+            if name_hint.lower() in dev.name.lower():
+                return path
+        return None
+
+devices = DeviceFinder()
 
 class MouseMap:
     def __init__(self):
@@ -36,7 +41,7 @@ class MouseMap:
         })
 
         self.isMapActive = False
-        self.keyDevice = InputDevice(KEYBOARD)
+        self.keyDevice = InputDevice(devices.keyboard)
         self.keyDevice.grab()
 
         self.key_action_map = {
@@ -50,7 +55,7 @@ class MouseMap:
         self.scroll_task_manager = ScrollTaskManager()
 
     async def touchpad_monitor(self):
-        touchpadDevice = InputDevice(TOUCHPAD)
+        touchpadDevice = InputDevice(devices.touchpad)
         async for event in touchpadDevice.async_read_loop():
             if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
                 self.isMapActive = event.value == 1
