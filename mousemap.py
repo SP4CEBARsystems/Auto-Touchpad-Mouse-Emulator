@@ -11,7 +11,7 @@ class DeviceFinder:
         self.mouse = self.findDevicePathEvdev('SteelSeries SteelSeries Rival 3')
         if self.mouse is not None:
             print("Mouse detected: This macro is now obsolete, exiting.")
-            # sys.exit(0)
+            sys.exit(0)
 
     @staticmethod
     def findDevicePathEvdev(name_hint):
