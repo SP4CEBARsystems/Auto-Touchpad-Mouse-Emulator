@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
+import signal
+import sys
 from evdev import InputDevice, ecodes, UInput, list_devices
 
 def find_device_path_evdev(name_hint):
@@ -101,12 +103,27 @@ async def keyboard_monitor():
         uiKey.write_event(event)
         uiKey.syn()
 
+def cleanup():
+    try:
+        keyDevice.ungrab()
+    except Exception:
+        pass
+
+def signal_handler(sig, frame):
+    cleanup()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 async def main():
-    await asyncio.gather(
-        touchpad_monitor(),
-        keyboard_monitor()
-    )
+    try:
+        await asyncio.gather(
+            touchpad_monitor(),
+            keyboard_monitor()
+        )
+    finally:
+        cleanup()
 
 if __name__ == "__main__":
     asyncio.run(main())
