@@ -18,70 +18,71 @@ if MOUSE is not None:
     print("Mouse detected: This macro is now obsolete, exiting.")
     sys.exit(0)
 
-# Virtual device to emit events
-uiKey = UInput()
-uiMouse = UInput({
-    ecodes.EV_KEY: [
-        ecodes.BTN_LEFT,
-        ecodes.BTN_MIDDLE,
-        ecodes.BTN_RIGHT
-    ],
-    ecodes.EV_REL: [
-        ecodes.REL_X,
-        ecodes.REL_Y,
-        ecodes.REL_WHEEL
-    ]
-})
+class MouseMap:
+    def __init__(self):
+        # Virtual device to emit events
+        self.uiKey = UInput()
+        self.uiMouse = UInput({
+            ecodes.EV_KEY: [
+                ecodes.BTN_LEFT,
+                ecodes.BTN_MIDDLE,
+                ecodes.BTN_RIGHT
+            ],
+            ecodes.EV_REL: [
+                ecodes.REL_X,
+                ecodes.REL_Y,
+                ecodes.REL_WHEEL
+            ]
+        })
 
-isMapActive = False
-keyDevice = InputDevice(KEYBOARD)
-keyDevice.grab()
+        self.isMapActive = False
+        self.keyDevice = InputDevice(KEYBOARD)
+        self.keyDevice.grab()
 
-key_action_map = {
-    ecodes.KEY_J: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_LEFT},
-    ecodes.KEY_K: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_MIDDLE},
-    ecodes.KEY_L: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_RIGHT},
-    ecodes.KEY_I: {"is_map_active": False, "type": "scroll", "value": -1},  # scroll down
-    ecodes.KEY_O: {"is_map_active": False, "type": "scroll", "value": 1},   # scroll up
-}
+        self.key_action_map = {
+            ecodes.KEY_J: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_LEFT},
+            ecodes.KEY_K: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_MIDDLE},
+            ecodes.KEY_L: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_RIGHT},
+            ecodes.KEY_I: {"is_map_active": False, "type": "scroll", "value": -1},  # scroll down
+            ecodes.KEY_O: {"is_map_active": False, "type": "scroll", "value": 1},   # scroll up
+        }
 
-async def touchpad_monitor():
-    global isMapActive
-    touchpadDevice = InputDevice(TOUCHPAD)
-    async for event in touchpadDevice.async_read_loop():
-        if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-            isMapActive = event.value == 1
+        self.scroll_task_manager = ScrollTaskManager()
 
-async def keyboard_monitor():
-    global isMapActive
-    global keyDevice
-    async for event in keyDevice.async_read_loop():
-        isKeyEvent = event.type == ecodes.EV_KEY
-        isPressedOrReleased = event.value in (1, 0)
-        isToBeMapped = event.code in key_action_map
-        isKeyDown = event.value == 1
-        if isKeyEvent and isPressedOrReleased and isToBeMapped:
+    async def touchpad_monitor(self):
+        touchpadDevice = InputDevice(TOUCHPAD)
+        async for event in touchpadDevice.async_read_loop():
+            if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
+                self.isMapActive = event.value == 1
+
+    async def keyboard_monitor(self):
+        async for event in self.keyDevice.async_read_loop():
+            isKeyEvent = event.type == ecodes.EV_KEY
+            isPressedOrReleased = event.value in (1, 0)
+            isToBeMapped = event.code in self.key_action_map
+            isKeyDown = event.value == 1
+            if isKeyEvent and isPressedOrReleased and isToBeMapped:
+                if isKeyDown:
+                    self.key_action_map[event.code]["is_map_active"] = self.isMapActive
+                action = self.key_action_map[event.code]
+                if action["is_map_active"]:
+                    handleKeyMap(event, isKeyDown, action)
+                    continue  # Do not forward J/K/L/I/O key events
+            # Forward all other keys
+            self.uiKey.write_event(event)
+            self.uiKey.syn()
+
+    def handleKeyMap(self, event, isKeyDown, action):
+        if action["type"] == "mouse":
+            self.uiMouse.write(ecodes.EV_KEY, action["button"], event.value)
+            self.uiMouse.syn()
+        elif action["type"] == "scroll":
             if isKeyDown:
-                key_action_map[event.code]["is_map_active"] = isMapActive
-            action = key_action_map[event.code]
-            if action["is_map_active"]:
-                handleKeyMap(event, isKeyDown, action)
-                continue  # Do not forward J/K/L/I/O key events
-        # Forward all other keys
-        uiKey.write_event(event)
-        uiKey.syn()
-
-def handleKeyMap(event, isKeyDown, action):
-    if action["type"] == "mouse":
-        uiMouse.write(ecodes.EV_KEY, action["button"], event.value)
-        uiMouse.syn()
-    elif action["type"] == "scroll":
-        if isKeyDown:
-            uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
-            uiMouse.syn()
-            scroll_task_manager.addScrollTask(event, action)
-        else:
-            scroll_task_manager.removeScrollTask(event)
+                self.uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
+                self.uiMouse.syn()
+                self.scroll_task_manager.addScrollTask(event, action)
+            else:
+                self.scroll_task_manager.removeScrollTask(event)
 
 class ScrollTaskManager:
     def __init__(self):
@@ -89,9 +90,9 @@ class ScrollTaskManager:
 
     async def scroll_interval(self, key_code, value):
         await asyncio.sleep(0.5)  # Initial delay
-        while key_action_map[key_code]["is_map_active"]:
-            uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
-            uiMouse.syn()
+        while mouseMap.key_action_map[key_code]["is_map_active"]:
+            mouseMap.uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
+            mouseMap.uiMouse.syn()
             await asyncio.sleep(0.05)
 
     def addScrollTask(self, event, action):
@@ -107,11 +108,11 @@ class ScrollTaskManager:
         self.scroll_tasks[event.code].cancel()
         del self.scroll_tasks[event.code]
 
-scroll_task_manager = ScrollTaskManager()
+mouseMap = MouseMap()
 
 def cleanup():
     try:
-        keyDevice.ungrab()
+        mouseMap.keyDevice.ungrab()
     except Exception:
         pass
 
