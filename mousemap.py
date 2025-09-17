@@ -112,20 +112,26 @@ class ScrollTaskManager:
         self.scroll_tasks[event.code].cancel()
         del self.scroll_tasks[event.code]
 
+class CleanupManager:
+    @staticmethod
+    def cleanup():
+        try:
+            mouseMap.keyDevice.ungrab()
+        except Exception:
+            pass
+
+    @staticmethod
+    def signal_handler(sig, frame):
+        CleanupManager.cleanup()
+        sys.exit(0)
+
+    @staticmethod
+    def setup_signal_handlers():
+        signal.signal(signal.SIGINT, CleanupManager.signal_handler)
+        signal.signal(signal.SIGTERM, CleanupManager.signal_handler)
+
 mouseMap = MouseMap()
-
-def cleanup():
-    try:
-        mouseMap.keyDevice.ungrab()
-    except Exception:
-        pass
-
-def signal_handler(sig, frame):
-    cleanup()
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-signal.signal(signal.SIGTERM, signal_handler)
+CleanupManager.setup_signal_handlers()
 
 async def main():
     try:
@@ -134,7 +140,7 @@ async def main():
             mouseMap.keyboard_monitor()
         )
     finally:
-        cleanup()
+        CleanupManager.cleanup()
 
 if __name__ == "__main__":
     asyncio.run(main())
