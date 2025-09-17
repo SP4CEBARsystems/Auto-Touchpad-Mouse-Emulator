@@ -66,7 +66,7 @@ class MouseMap:
                     self.key_action_map[event.code]["is_map_active"] = self.isMapActive
                 action = self.key_action_map[event.code]
                 if action["is_map_active"]:
-                    handleKeyMap(event, isKeyDown, action)
+                    self.handleKeyMap(event, isKeyDown, action)
                     continue  # Do not forward J/K/L/I/O key events
             # Forward all other keys
             self.uiKey.write_event(event)
@@ -126,8 +126,8 @@ signal.signal(signal.SIGTERM, signal_handler)
 async def main():
     try:
         await asyncio.gather(
-            touchpad_monitor(),
-            keyboard_monitor()
+            mouseMap.touchpad_monitor(),
+            mouseMap.keyboard_monitor()
         )
     finally:
         cleanup()
