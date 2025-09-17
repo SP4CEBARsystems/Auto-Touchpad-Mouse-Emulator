@@ -53,15 +53,17 @@ async def scroll_interval(key_code, value):
         await asyncio.sleep(0.05)
 
 def addScrollTask(event, action):
-    if event.code not in scroll_tasks:
-        scroll_tasks[event.code] = asyncio.create_task(
-                                scroll_interval(event.code, action["value"])
-                            )
+    if event.code in scroll_tasks:
+        return
+    scroll_tasks[event.code] = asyncio.create_task(
+        scroll_interval(event.code, action["value"])
+    )
 
 def removeScrollTask(event):
-    if event.code in scroll_tasks:
-        scroll_tasks[event.code].cancel()
-        del scroll_tasks[event.code]
+    if event.code not in scroll_tasks:
+        return
+    scroll_tasks[event.code].cancel()
+    del scroll_tasks[event.code]
 
 async def touchpad_monitor():
     global finger_down
