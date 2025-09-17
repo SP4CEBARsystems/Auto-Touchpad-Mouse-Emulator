@@ -16,7 +16,7 @@ KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 MOUSE = find_device_path_evdev('SteelSeries SteelSeries Rival 3')
 if MOUSE is not None:
     print("Mouse detected: This macro is now obsolete, exiting.")
-    sys.exit(0)
+    # sys.exit(0)
 
 # Virtual device to emit events
 uiKey = UInput()
@@ -45,28 +45,31 @@ key_action_map = {
     ecodes.KEY_O: {"is_map_active": False, "type": "scroll", "value": 1},   # scroll up
 }
 
-scroll_tasks = {}
+class ScrollTaskManager:
+    def __init__(self):
+        self.scroll_tasks = {}
 
-async def scroll_interval(key_code, value):
-    await asyncio.sleep(0.5)  # Initial delay
-    while key_action_map[key_code]["is_map_active"]:
-        uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
-        uiMouse.syn()
-        await asyncio.sleep(0.05)
+    async def scroll_interval(self, key_code, value):
+        await asyncio.sleep(0.5)  # Initial delay
+        while key_action_map[key_code]["is_map_active"]:
+            uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
+            uiMouse.syn()
+            await asyncio.sleep(0.05)
 
-def addScrollTask(event, action):
-    if event.code in scroll_tasks:
-        return
-    scroll_tasks[event.code] = asyncio.create_task(
-        scroll_interval(event.code, action["value"])
-    )
+    def addScrollTask(self, event, action):
+        if event.code in self.scroll_tasks:
+            return
+        self.scroll_tasks[event.code] = asyncio.create_task(
+            self.scroll_interval(event.code, action["value"])
+        )
 
-def removeScrollTask(event):
-    if event.code not in scroll_tasks:
-        return
-    scroll_tasks[event.code].cancel()
-    del scroll_tasks[event.code]
+    def removeScrollTask(self, event):
+        if event.code not in self.scroll_tasks:
+            return
+        self.scroll_tasks[event.code].cancel()
+        del self.scroll_tasks[event.code]
 
+scroll_task_manager = ScrollTaskManager()
 
 async def touchpad_monitor():
     global isMapActive
@@ -102,9 +105,9 @@ def handleKeyMap(event, isKeyDown, action):
         if isKeyDown:
             uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
             uiMouse.syn()
-            addScrollTask(event, action)
+            scroll_task_manager.addScrollTask(event, action)
         else:
-            removeScrollTask(event)
+            scroll_task_manager.removeScrollTask(event)
 
 def cleanup():
     try:
