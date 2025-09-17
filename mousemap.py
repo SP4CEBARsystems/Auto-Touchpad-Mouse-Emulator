@@ -45,32 +45,6 @@ key_action_map = {
     ecodes.KEY_O: {"is_map_active": False, "type": "scroll", "value": 1},   # scroll up
 }
 
-class ScrollTaskManager:
-    def __init__(self):
-        self.scroll_tasks = {}
-
-    async def scroll_interval(self, key_code, value):
-        await asyncio.sleep(0.5)  # Initial delay
-        while key_action_map[key_code]["is_map_active"]:
-            uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
-            uiMouse.syn()
-            await asyncio.sleep(0.05)
-
-    def addScrollTask(self, event, action):
-        if event.code in self.scroll_tasks:
-            return
-        self.scroll_tasks[event.code] = asyncio.create_task(
-            self.scroll_interval(event.code, action["value"])
-        )
-
-    def removeScrollTask(self, event):
-        if event.code not in self.scroll_tasks:
-            return
-        self.scroll_tasks[event.code].cancel()
-        del self.scroll_tasks[event.code]
-
-scroll_task_manager = ScrollTaskManager()
-
 async def touchpad_monitor():
     global isMapActive
     touchpadDevice = InputDevice(TOUCHPAD)
@@ -108,6 +82,32 @@ def handleKeyMap(event, isKeyDown, action):
             scroll_task_manager.addScrollTask(event, action)
         else:
             scroll_task_manager.removeScrollTask(event)
+
+class ScrollTaskManager:
+    def __init__(self):
+        self.scroll_tasks = {}
+
+    async def scroll_interval(self, key_code, value):
+        await asyncio.sleep(0.5)  # Initial delay
+        while key_action_map[key_code]["is_map_active"]:
+            uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
+            uiMouse.syn()
+            await asyncio.sleep(0.05)
+
+    def addScrollTask(self, event, action):
+        if event.code in self.scroll_tasks:
+            return
+        self.scroll_tasks[event.code] = asyncio.create_task(
+            self.scroll_interval(event.code, action["value"])
+        )
+
+    def removeScrollTask(self, event):
+        if event.code not in self.scroll_tasks:
+            return
+        self.scroll_tasks[event.code].cancel()
+        del self.scroll_tasks[event.code]
+
+scroll_task_manager = ScrollTaskManager()
 
 def cleanup():
     try:
