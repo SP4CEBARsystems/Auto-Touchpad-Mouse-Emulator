@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
+import signal
+import sys
 from evdev import InputDevice, ecodes, UInput, list_devices
 
 def find_device_path_evdev(name_hint):
@@ -14,11 +16,11 @@ KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 MOUSE = find_device_path_evdev('SteelSeries SteelSeries Rival 3')
 if MOUSE is not None:
     print("Mouse detected: This macro is now obsolete, exiting.")
-    exit(0)
+    sys.exit(0)
 
 # Virtual device to emit events
 uiKey = UInput()
-ui = UInput({
+uiMouse = UInput({
     ecodes.EV_KEY: [
         ecodes.BTN_LEFT,
         ecodes.BTN_MIDDLE,
@@ -31,9 +33,9 @@ ui = UInput({
     ]
 })
 
-finger_down = False
-keyDev = InputDevice(KEYBOARD)
-keyDev.grab()
+isMapActive = False
+keyDevice = InputDevice(KEYBOARD)
+keyDevice.grab()
 
 key_action_map = {
     ecodes.KEY_J: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_LEFT},
@@ -48,8 +50,8 @@ scroll_tasks = {}
 async def scroll_interval(key_code, value):
     await asyncio.sleep(0.5)  # Initial delay
     while key_action_map[key_code]["is_map_active"]:
-        ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
-        ui.syn()
+        uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
+        uiMouse.syn()
         await asyncio.sleep(0.05)
 
 def addScrollTask(event, action):
@@ -65,47 +67,66 @@ def removeScrollTask(event):
     scroll_tasks[event.code].cancel()
     del scroll_tasks[event.code]
 
+
 async def touchpad_monitor():
-    global finger_down
-    dev = InputDevice(TOUCHPAD)
-    async for event in dev.async_read_loop():
+    global isMapActive
+    touchpadDevice = InputDevice(TOUCHPAD)
+    async for event in touchpadDevice.async_read_loop():
         if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-            finger_down = event.value == 1
+            isMapActive = event.value == 1
 
 async def keyboard_monitor():
-    global finger_down
-    global keyDev
-    async for event in keyDev.async_read_loop():
+    global isMapActive
+    global keyDevice
+    async for event in keyDevice.async_read_loop():
         isKeyEvent = event.type == ecodes.EV_KEY
         isPressedOrReleased = event.value in (1, 0)
         isToBeMapped = event.code in key_action_map
         isKeyDown = event.value == 1
         if isKeyEvent and isPressedOrReleased and isToBeMapped:
             if isKeyDown:
-                key_action_map[event.code]["is_map_active"] = finger_down
+                key_action_map[event.code]["is_map_active"] = isMapActive
             action = key_action_map[event.code]
             if action["is_map_active"]:
-                if action["type"] == "mouse":
-                    ui.write(ecodes.EV_KEY, action["button"], event.value)
-                elif action["type"] == "scroll":
-                    if isKeyDown:
-                        ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
-                        addScrollTask(event, action)
-                    else:
-                        removeScrollTask(event)
-                ui.syn()
-                if finger_down:
-                    key_action_map[event.code]["is_map_active"] = finger_down
+                handleKeyMap(event, isKeyDown, action)
                 continue  # Do not forward J/K/L/I/O key events
         # Forward all other keys
         uiKey.write_event(event)
         uiKey.syn()
 
+def handleKeyMap(event, isKeyDown, action):
+    if action["type"] == "mouse":
+        uiMouse.write(ecodes.EV_KEY, action["button"], event.value)
+        uiMouse.syn()
+    elif action["type"] == "scroll":
+        if isKeyDown:
+            uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
+            uiMouse.syn()
+            addScrollTask(event, action)
+        else:
+            removeScrollTask(event)
+
+def cleanup():
+    try:
+        keyDevice.ungrab()
+    except Exception:
+        pass
+
+def signal_handler(sig, frame):
+    cleanup()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
 async def main():
-    await asyncio.gather(
-        touchpad_monitor(),
-        keyboard_monitor()
-    )
+    try:
+        await asyncio.gather(
+            touchpad_monitor(),
+            keyboard_monitor()
+        )
+    finally:
+        cleanup()
 
 if __name__ == "__main__":
     asyncio.run(main())
