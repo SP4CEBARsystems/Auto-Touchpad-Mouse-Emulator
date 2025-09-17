@@ -58,7 +58,7 @@ class MouseMap:
         self.isMapActive = False
         self.keyDevice = InputDevice(self.devices.keyboard)
         self.keyDevice.grab()
-        print("keyboard grabbed")
+        print("Keyboard grabbed")
 
         self.keyActionMap = {
             ecodes.KEY_J: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_LEFT},
@@ -74,6 +74,7 @@ class MouseMap:
         """
         Monitor touchpad events and update isMapActive based on touch state.
         """
+        print("Listening for touchpad events...")
         touchpadDevice = InputDevice(self.devices.touchpad)
         async for event in touchpadDevice.async_read_loop():
             if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
@@ -83,6 +84,7 @@ class MouseMap:
         """
         Monitor keyboard events, map specific keys to mouse actions if active, and forward others.
         """
+        print("Listening for keyboard events...")
         async for event in self.keyDevice.async_read_loop():
             isKeyEvent = event.type == ecodes.EV_KEY
             isPressedOrReleased = event.value in (1, 0)
@@ -174,7 +176,7 @@ class CleanupManager:
         """
         try:
             mouseMap.keyDevice.ungrab()
-            print("keyboard ungrabbed")
+            print("Keyboard ungrabbed")
         except Exception:
             pass
 
@@ -184,7 +186,7 @@ class CleanupManager:
         Handle termination signals, clean up resources, and exit.
         """
         CleanupManager.cleanup()
-        print("exiting...")
+        print("Exiting...")
         sys.exit(0)
 
     @staticmethod
