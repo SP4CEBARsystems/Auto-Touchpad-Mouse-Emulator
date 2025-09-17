@@ -21,10 +21,9 @@ class DeviceFinder:
                 return path
         return None
 
-devices = DeviceFinder()
-
 class MouseMap:
     def __init__(self):
+        self.devices = DeviceFinder()
         # Virtual device to emit events
         self.uiKey = UInput()
         self.uiMouse = UInput({
@@ -41,7 +40,7 @@ class MouseMap:
         })
 
         self.isMapActive = False
-        self.keyDevice = InputDevice(devices.keyboard)
+        self.keyDevice = InputDevice(self.devices.keyboard)
         self.keyDevice.grab()
 
         self.key_action_map = {
@@ -55,7 +54,7 @@ class MouseMap:
         self.scroll_task_manager = ScrollTaskManager()
 
     async def touchpad_monitor(self):
-        touchpadDevice = InputDevice(devices.touchpad)
+        touchpadDevice = InputDevice(self.devices.touchpad)
         async for event in touchpadDevice.async_read_loop():
             if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
                 self.isMapActive = event.value == 1
