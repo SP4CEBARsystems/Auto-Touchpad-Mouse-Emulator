@@ -89,15 +89,14 @@ async def keyboard_monitor():
             if action["is_map_active"]:
                 if action["type"] == "mouse":
                     ui.write(ecodes.EV_KEY, action["button"], event.value)
+                    ui.syn()
                 elif action["type"] == "scroll":
                     if isKeyDown:
                         ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
+                        ui.syn()
                         addScrollTask(event, action)
                     else:
                         removeScrollTask(event)
-                ui.syn()
-                if finger_down:
-                    key_action_map[event.code]["is_map_active"] = finger_down
                 continue  # Do not forward J/K/L/I/O key events
         # Forward all other keys
         uiKey.write_event(event)
