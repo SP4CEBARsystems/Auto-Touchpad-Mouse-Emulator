@@ -42,6 +42,7 @@ class MouseMap:
         self.isMapActive = False
         self.keyDevice = InputDevice(self.devices.keyboard)
         self.keyDevice.grab()
+        print("keyboard grabbed")
 
         self.keyActionMap = {
             ecodes.KEY_J: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_LEFT},
@@ -117,12 +118,14 @@ class CleanupManager:
     def cleanup():
         try:
             mouseMap.keyDevice.ungrab()
+            print("keyboard ungrabbed")
         except Exception:
             pass
 
     @staticmethod
     def signalHandler(sig, frame):
         CleanupManager.cleanup()
+        print("exiting...")
         sys.exit(0)
 
     @staticmethod
