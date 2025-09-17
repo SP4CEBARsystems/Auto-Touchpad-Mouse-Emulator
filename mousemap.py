@@ -6,6 +6,10 @@ from evdev import InputDevice, ecodes, UInput, list_devices
 
 class DeviceFinder:
     def __init__(self):
+        """
+        Initialize DeviceFinder by locating touchpad, keyboard, and mouse devices.
+        Exits if a mouse is detected.
+        """
         self.touchpad = self.findDevicePathEvdev('touchpad') or "/dev/input/event6"
         self.keyboard = self.findDevicePathEvdev('Asus Keyboard') or "/dev/input/event7"
         self.mouse = self.findDevicePathEvdev('SteelSeries SteelSeries Rival 3')
@@ -15,6 +19,15 @@ class DeviceFinder:
 
     @staticmethod
     def findDevicePathEvdev(name_hint):
+        """
+        Search for an input device path containing the given name hint.
+
+        Args:
+            name_hint (str): Substring to match in device names.
+
+        Returns:
+            str or None: Path to the device if found, else None.
+        """
         for path in list_devices():
             dev = InputDevice(path)
             if name_hint.lower() in dev.name.lower():
@@ -23,6 +36,9 @@ class DeviceFinder:
 
 class MouseMap:
     def __init__(self):
+        """
+        Initialize MouseMap, set up devices, virtual input, key mappings, and scroll manager.
+        """
         self.devices = DeviceFinder()
         # Virtual device to emit events
         self.uiKey = UInput()
@@ -55,12 +71,18 @@ class MouseMap:
         self.scrollTaskManager = ScrollTaskManager()
 
     async def touchpadMonitor(self):
+        """
+        Monitor touchpad events and update isMapActive based on touch state.
+        """
         touchpadDevice = InputDevice(self.devices.touchpad)
         async for event in touchpadDevice.async_read_loop():
             if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
                 self.isMapActive = event.value == 1
 
     async def keyboardMonitor(self):
+        """
+        Monitor keyboard events, map specific keys to mouse actions if active, and forward others.
+        """
         async for event in self.keyDevice.async_read_loop():
             isKeyEvent = event.type == ecodes.EV_KEY
             isPressedOrReleased = event.value in (1, 0)
@@ -78,6 +100,14 @@ class MouseMap:
             self.uiKey.syn()
 
     def handleKeyMap(self, event, isKeyDown, action):
+        """
+        Handle mapped key events, emitting mouse button or scroll actions.
+
+        Args:
+            event: The input event object.
+            isKeyDown (bool): True if key is pressed, False if released.
+            action (dict): Mapping info for the key.
+        """
         if action["type"] == "mouse":
             self.uiMouse.write(ecodes.EV_KEY, action["button"], event.value)
             self.uiMouse.syn()
@@ -91,9 +121,19 @@ class MouseMap:
 
 class ScrollTaskManager:
     def __init__(self):
+        """
+        Initialize ScrollTaskManager to manage scroll tasks for keys.
+        """
         self.scrollTasks = {}
 
     async def scrollInterval(self, key_code, value):
+        """
+        Emit repeated scroll events while the mapped key is active.
+
+        Args:
+            key_code (int): Key code being monitored.
+            value (int): Scroll direction and amount.
+        """
         await asyncio.sleep(0.5)  # Initial delay
         while mouseMap.keyActionMap[key_code]["is_map_active"]:
             mouseMap.uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
@@ -101,6 +141,13 @@ class ScrollTaskManager:
             await asyncio.sleep(0.05)
 
     def addScrollTask(self, event, action):
+        """
+        Start a scroll task for a key if not already running.
+
+        Args:
+            event: The input event object.
+            action (dict): Mapping info for the key.
+        """
         if event.code in self.scrollTasks:
             return
         self.scrollTasks[event.code] = asyncio.create_task(
@@ -108,6 +155,12 @@ class ScrollTaskManager:
         )
 
     def removeScrollTask(self, event):
+        """
+        Cancel and remove the scroll task for a key.
+
+        Args:
+            event: The input event object.
+        """
         if event.code not in self.scrollTasks:
             return
         self.scrollTasks[event.code].cancel()
@@ -116,6 +169,9 @@ class ScrollTaskManager:
 class CleanupManager:
     @staticmethod
     def cleanup():
+        """
+        Release grabbed keyboard device and print status.
+        """
         try:
             mouseMap.keyDevice.ungrab()
             print("keyboard ungrabbed")
@@ -124,12 +180,18 @@ class CleanupManager:
 
     @staticmethod
     def signalHandler(sig, frame):
+        """
+        Handle termination signals, clean up resources, and exit.
+        """
         CleanupManager.cleanup()
         print("exiting...")
         sys.exit(0)
 
     @staticmethod
     def setupSignalHandlers():
+        """
+        Register signal handlers for graceful termination.
+        """
         signal.signal(signal.SIGINT, CleanupManager.signalHandler)
         signal.signal(signal.SIGTERM, CleanupManager.signalHandler)
 
@@ -137,6 +199,10 @@ mouseMap = MouseMap()
 CleanupManager.setupSignalHandlers()
 
 async def main():
+    """
+    Run the main event loop for touchpad and keyboard monitoring.
+    Ensures cleanup on exit.
+    """
     try:
         await asyncio.gather(
             mouseMap.touchpadMonitor(),
