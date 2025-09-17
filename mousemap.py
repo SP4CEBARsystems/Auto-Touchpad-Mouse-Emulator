@@ -2,6 +2,13 @@
 import asyncio
 from evdev import InputDevice, ecodes, UInput, list_devices
 
+def find_device_path_evdev(name_hint):
+    for path in list_devices():
+        dev = InputDevice(path)
+        if name_hint.lower() in dev.name.lower():
+            return path
+    return None
+
 TOUCHPAD = find_device_path_evdev('touchpad') or "/dev/input/event6"
 KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 MOUSE = find_device_path_evdev('SteelSeries SteelSeries Rival 3')
@@ -57,14 +64,6 @@ def removeScrollTask(event):
         return
     scroll_tasks[event.code].cancel()
     del scroll_tasks[event.code]
-
-
-def find_device_path_evdev(name_hint):
-    for path in list_devices():
-        dev = InputDevice(path)
-        if name_hint.lower() in dev.name.lower():
-            return path
-    return None
 
 
 async def touchpad_monitor():
