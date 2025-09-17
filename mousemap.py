@@ -16,7 +16,7 @@ KEYBOARD = find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
 MOUSE = find_device_path_evdev('SteelSeries SteelSeries Rival 3')
 if MOUSE is not None:
     print("Mouse detected: This macro is now obsolete, exiting.")
-    exit(0)
+    sys.exit(0)
 
 # Virtual device to emit events
 uiKey = UInput()
