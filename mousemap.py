@@ -88,20 +88,23 @@ async def keyboard_monitor():
                 key_action_map[event.code]["is_map_active"] = isMapActive
             action = key_action_map[event.code]
             if action["is_map_active"]:
-                if action["type"] == "mouse":
-                    uiMouse.write(ecodes.EV_KEY, action["button"], event.value)
-                    uiMouse.syn()
-                elif action["type"] == "scroll":
-                    if isKeyDown:
-                        uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
-                        uiMouse.syn()
-                        addScrollTask(event, action)
-                    else:
-                        removeScrollTask(event)
+                handleKeyMap(event, isKeyDown, action)
                 continue  # Do not forward J/K/L/I/O key events
         # Forward all other keys
         uiKey.write_event(event)
         uiKey.syn()
+
+def handleKeyMap(event, isKeyDown, action):
+    if action["type"] == "mouse":
+        uiMouse.write(ecodes.EV_KEY, action["button"], event.value)
+        uiMouse.syn()
+    elif action["type"] == "scroll":
+        if isKeyDown:
+            uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
+            uiMouse.syn()
+            addScrollTask(event, action)
+        else:
+            removeScrollTask(event)
 
 def cleanup():
     try:
