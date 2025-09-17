@@ -43,6 +43,26 @@ key_action_map = {
     ecodes.KEY_O: {"is_map_active": False, "type": "scroll", "value": 1},   # scroll up
 }
 
+scroll_tasks = {}
+
+async def scroll_interval(key_code, value):
+    await asyncio.sleep(0.5)  # Initial delay
+    while key_action_map[key_code]["is_map_active"]:
+        ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
+        ui.syn()
+        await asyncio.sleep(0.05)
+
+def addScrollTask(event, action):
+    if event.code not in scroll_tasks:
+        scroll_tasks[event.code] = asyncio.create_task(
+                                scroll_interval(event.code, action["value"])
+                            )
+
+def removeScrollTask(event):
+    if event.code in scroll_tasks:
+        scroll_tasks[event.code].cancel()
+        del scroll_tasks[event.code]
+
 async def touchpad_monitor():
     global finger_down
     dev = InputDevice(TOUCHPAD)
@@ -65,8 +85,12 @@ async def keyboard_monitor():
             if action["is_map_active"]:
                 if action["type"] == "mouse":
                     ui.write(ecodes.EV_KEY, action["button"], event.value)
-                elif action["type"] == "scroll" and isKeyDown:
-                    ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
+                elif action["type"] == "scroll":
+                    if isKeyDown:
+                        ui.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
+                        addScrollTask(event, action)
+                    else:
+                        removeScrollTask(event)
                 ui.syn()
                 if finger_down:
                     key_action_map[event.code]["is_map_active"] = finger_down
