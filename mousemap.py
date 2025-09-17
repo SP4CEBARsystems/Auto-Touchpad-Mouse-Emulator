@@ -6,15 +6,15 @@ from evdev import InputDevice, ecodes, UInput, list_devices
 
 class DeviceFinder:
     def __init__(self):
-        self.touchpad = self.find_device_path_evdev('touchpad') or "/dev/input/event6"
-        self.keyboard = self.find_device_path_evdev('Asus Keyboard') or "/dev/input/event7"
-        self.mouse = self.find_device_path_evdev('SteelSeries SteelSeries Rival 3')
+        self.touchpad = self.findDevicePathEvdev('touchpad') or "/dev/input/event6"
+        self.keyboard = self.findDevicePathEvdev('Asus Keyboard') or "/dev/input/event7"
+        self.mouse = self.findDevicePathEvdev('SteelSeries SteelSeries Rival 3')
         if self.mouse is not None:
             print("Mouse detected: This macro is now obsolete, exiting.")
-            sys.exit(0)
+            # sys.exit(0)
 
     @staticmethod
-    def find_device_path_evdev(name_hint):
+    def findDevicePathEvdev(name_hint):
         for path in list_devices():
             dev = InputDevice(path)
             if name_hint.lower() in dev.name.lower():
@@ -43,7 +43,7 @@ class MouseMap:
         self.keyDevice = InputDevice(self.devices.keyboard)
         self.keyDevice.grab()
 
-        self.key_action_map = {
+        self.keyActionMap = {
             ecodes.KEY_J: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_LEFT},
             ecodes.KEY_K: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_MIDDLE},
             ecodes.KEY_L: {"is_map_active": False, "type": "mouse", "button": ecodes.BTN_RIGHT},
@@ -51,24 +51,24 @@ class MouseMap:
             ecodes.KEY_O: {"is_map_active": False, "type": "scroll", "value": 1},   # scroll up
         }
 
-        self.scroll_task_manager = ScrollTaskManager()
+        self.scrollTaskManager = ScrollTaskManager()
 
-    async def touchpad_monitor(self):
+    async def touchpadMonitor(self):
         touchpadDevice = InputDevice(self.devices.touchpad)
         async for event in touchpadDevice.async_read_loop():
             if event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
                 self.isMapActive = event.value == 1
 
-    async def keyboard_monitor(self):
+    async def keyboardMonitor(self):
         async for event in self.keyDevice.async_read_loop():
             isKeyEvent = event.type == ecodes.EV_KEY
             isPressedOrReleased = event.value in (1, 0)
-            isToBeMapped = event.code in self.key_action_map
+            isToBeMapped = event.code in self.keyActionMap
             isKeyDown = event.value == 1
             if isKeyEvent and isPressedOrReleased and isToBeMapped:
                 if isKeyDown:
-                    self.key_action_map[event.code]["is_map_active"] = self.isMapActive
-                action = self.key_action_map[event.code]
+                    self.keyActionMap[event.code]["is_map_active"] = self.isMapActive
+                action = self.keyActionMap[event.code]
                 if action["is_map_active"]:
                     self.handleKeyMap(event, isKeyDown, action)
                     continue  # Do not forward J/K/L/I/O key events
@@ -84,33 +84,33 @@ class MouseMap:
             if isKeyDown:
                 self.uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, action["value"])
                 self.uiMouse.syn()
-                self.scroll_task_manager.addScrollTask(event, action)
+                self.scrollTaskManager.addScrollTask(event, action)
             else:
-                self.scroll_task_manager.removeScrollTask(event)
+                self.scrollTaskManager.removeScrollTask(event)
 
 class ScrollTaskManager:
     def __init__(self):
-        self.scroll_tasks = {}
+        self.scrollTasks = {}
 
-    async def scroll_interval(self, key_code, value):
+    async def scrollInterval(self, key_code, value):
         await asyncio.sleep(0.5)  # Initial delay
-        while mouseMap.key_action_map[key_code]["is_map_active"]:
+        while mouseMap.keyActionMap[key_code]["is_map_active"]:
             mouseMap.uiMouse.write(ecodes.EV_REL, ecodes.REL_WHEEL, value)
             mouseMap.uiMouse.syn()
             await asyncio.sleep(0.05)
 
     def addScrollTask(self, event, action):
-        if event.code in self.scroll_tasks:
+        if event.code in self.scrollTasks:
             return
-        self.scroll_tasks[event.code] = asyncio.create_task(
-            self.scroll_interval(event.code, action["value"])
+        self.scrollTasks[event.code] = asyncio.create_task(
+            self.scrollInterval(event.code, action["value"])
         )
 
     def removeScrollTask(self, event):
-        if event.code not in self.scroll_tasks:
+        if event.code not in self.scrollTasks:
             return
-        self.scroll_tasks[event.code].cancel()
-        del self.scroll_tasks[event.code]
+        self.scrollTasks[event.code].cancel()
+        del self.scrollTasks[event.code]
 
 class CleanupManager:
     @staticmethod
@@ -121,23 +121,23 @@ class CleanupManager:
             pass
 
     @staticmethod
-    def signal_handler(sig, frame):
+    def signalHandler(sig, frame):
         CleanupManager.cleanup()
         sys.exit(0)
 
     @staticmethod
-    def setup_signal_handlers():
-        signal.signal(signal.SIGINT, CleanupManager.signal_handler)
-        signal.signal(signal.SIGTERM, CleanupManager.signal_handler)
+    def setupSignalHandlers():
+        signal.signal(signal.SIGINT, CleanupManager.signalHandler)
+        signal.signal(signal.SIGTERM, CleanupManager.signalHandler)
 
 mouseMap = MouseMap()
-CleanupManager.setup_signal_handlers()
+CleanupManager.setupSignalHandlers()
 
 async def main():
     try:
         await asyncio.gather(
-            mouseMap.touchpad_monitor(),
-            mouseMap.keyboard_monitor()
+            mouseMap.touchpadMonitor(),
+            mouseMap.keyboardMonitor()
         )
     finally:
         CleanupManager.cleanup()
